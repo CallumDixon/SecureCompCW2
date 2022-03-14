@@ -2,11 +2,11 @@ package comp3911.cwk2;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -98,12 +98,20 @@ public class AppServlet extends HttpServlet {
     }
   }
 
-  private boolean authenticated(String username, String password) throws SQLException {
+  private boolean authenticated(String username, String password) throws SQLException, NoSuchAlgorithmException {
+
+    MessageDigest md = MessageDigest.getInstance("SHA-256");
+    md.update(password.getBytes());
+    byte[] hash = md.digest();
+
+    StringBuilder hexString = new StringBuilder();
+    for (byte b : hash) {
+      hexString.append(Integer.toHexString(0xFF & b));
+    }
 
     PreparedStatement query = database.prepareStatement(AUTH_QUERY);
     query.setString(1,username);
-    query.setString(2,password);
-    System.out.println(query);
+    query.setString(2,hexString.toString());
     ResultSet results = query.executeQuery();
     return results.next();
   }
@@ -112,7 +120,6 @@ public class AppServlet extends HttpServlet {
     List<Record> records = new ArrayList<>();
     PreparedStatement query = database.prepareStatement(SEARCH_QUERY);
     query.setString(1,surname);
-    System.out.println(query);
     ResultSet results = query.executeQuery();
     while (results.next()) {
       Record rec = new Record();
