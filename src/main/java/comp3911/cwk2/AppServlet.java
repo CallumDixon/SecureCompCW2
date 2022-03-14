@@ -104,6 +104,7 @@ public class AppServlet extends HttpServlet {
 
   private boolean authenticated(String username, String password) throws SQLException {
     String query = String.format(AUTH_QUERY, username, password);
+    System.out.println(query);
     try (Statement stmt = database.createStatement()) {
       ResultSet results = stmt.executeQuery(query);
       return results.next();
@@ -113,6 +114,7 @@ public class AppServlet extends HttpServlet {
   private List<Record> searchResults(String surname) throws SQLException {
     List<Record> records = new ArrayList<>();
     String query = String.format(SEARCH_QUERY, surname);
+    System.out.println(query);
     try (Statement stmt = database.createStatement()) {
       ResultSet results = stmt.executeQuery(query);
       while (results.next()) {
