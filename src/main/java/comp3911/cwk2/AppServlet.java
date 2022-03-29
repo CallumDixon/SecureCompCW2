@@ -22,6 +22,7 @@ import freemarker.template.TemplateExceptionHandler;
 public class AppServlet extends HttpServlet {
 
   private static final String CONNECTION_URL = "jdbc:sqlite:db.sqlite3";
+  private static final String SALT_QUERY = "select * from user where username=?";
   private static final String AUTH_QUERY = "select * from user where username=? and password=?";
   private static final String SEARCH_QUERY = "select * from patient where surname like ?";
 
@@ -100,14 +101,22 @@ public class AppServlet extends HttpServlet {
 
   private boolean authenticated(String username, String password) throws SQLException, NoSuchAlgorithmException {
 
+    PreparedStatement salt_query = database.prepareStatement(SALT_QUERY);
+    salt_query.setString(1,username);
+    ResultSet salt_results = salt_query.executeQuery();
+
+    String salt = salt_results.getString("salt");
+
     MessageDigest md = MessageDigest.getInstance("SHA-256");
     md.update(password.getBytes());
+    md.update(salt.getBytes());
     byte[] hash = md.digest();
 
     StringBuilder hexString = new StringBuilder();
     for (byte b : hash) {
       hexString.append(Integer.toHexString(0xFF & b));
     }
+    System.out.println(hexString);
 
     PreparedStatement query = database.prepareStatement(AUTH_QUERY);
     query.setString(1,username);
@@ -131,7 +140,6 @@ public class AppServlet extends HttpServlet {
       rec.setDiagnosis(results.getString(7));
       records.add(rec);
     }
-
     return records;
   }
 }
